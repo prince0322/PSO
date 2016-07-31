@@ -37,14 +37,14 @@ inline void sort_rectangles() {
 
 // Extracts data from the data table and store in the rectangles.
 void extract_data() {
-  cout << "extracted Data" << endl;
+  cout << "TODO: extract data quickly" << endl;
 }
 
 int main() {
-  FILE *fr = fopen("input.txt", "r");
+  FILE *input_file = fopen("input.txt", "r");
   int argc, ans_width = 0, ans_height = 0;
   printf("Enter the no. of variable:\n");
-  fscanf(fr, "%d", &argc);
+  fscanf(input_file, "%d", &argc);
   int arr[argc + 1];
   for(int i = 1; i <= argc; i++) {
     fscanf(fr, "%d", &arr[i]);
