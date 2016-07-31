@@ -109,7 +109,7 @@ inline int get_fitness(long long ps) {
   rbp :: MaxRectsBinPack::FreeRectChoiceHeuristic heuristic
       = rbp :: MaxRectsBinPack::RectBestShortSideFit;
   rbp :: MaxRectsBinPack bin;
-  bin.Init(input_tam_width, 659700);
+  bin.Init(input_tam_width, 93700);
   int fitness = 0;
   int required_bit = bit_required(input_tam_width);
   // packing is done individually
