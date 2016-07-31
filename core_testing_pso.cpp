@@ -56,11 +56,18 @@ inline long long get_random(long long limit) {
   return x;
 }
 
-
-
 // Extracts data from the data table and store in the rectangles.
 void extract_data() {
-  cout << "TODO: extract data quickly" << endl;
+  FILE *input_file = fopen("input.txt", "r");
+  fscanf(input_file, "%d", &no_of_core);
+  fscanf(input_file, "%d", &input_tam_width);
+  for (int core = 0; core < no_of_core; core++) {
+    for (int w = 1; w <= input_tam_width; w++) {
+      int temp_test_time;
+      fscanf(input_file, "%d", &temp_test_time);
+      rectangles[core].push_back(make_pair(w, temp_test_time));
+    }
+  }
 }
 
 
