@@ -57,7 +57,7 @@ inline long long get_random(long long limit) {
 }
 
 // Extracts data from the data table and store in the rectangles.
-void extract_data() {
+inline void extract_data() {
   FILE *input_file = fopen("input.txt", "r");
   fscanf(input_file, "%d", &no_of_core);
   fscanf(input_file, "%d", &input_tam_width);
@@ -70,7 +70,59 @@ void extract_data() {
   }
 }
 
+// get rectangle from bit of particle generation.
+inline int get_rectangle_idx(long long ps, int l, int r) {
+  int res = 0;
+  for (int i = l; i <= r; i++) {
+    if ((1ll << i) & ps) {
+      res |= (1 << (i - l));
+    }
+  }
+  return res;
+}
 
+// return the limit value of the particle generation.
+inline long long get_limit() {
+  int total_bit = no_of_core * bit_required(input_tam_width);
+  long long x = (1ll << total_bit);
+  return x - 1ll;
+}
+
+// It returns the fitness value of the given generation.
+inline int get_fitness(long long ps) {
+  // This can be changed individually even for each rectangle packed.
+  rbp :: MaxRectsBinPack::FreeRectChoiceHeuristic heuristic
+      = rbp :: MaxRectsBinPack::RectBestShortSideFit;
+  rbp :: MaxRectsBinPack bin;
+  int fitness = 0;
+  int required_bit = bit_required(input_tam_width);
+  // packing is done individually
+  for (int i = 0; i < no_of_core; i++) {
+    int start_bit = required_bit * i;
+    int rect_idx = get_rectangle_idx(ps, start_bit, start_bit + required_bit - 1);
+    pair <int, int> rectangle = rectangles[i][rect_idx];
+    rbp :: Rect packedRect
+        = bin.Insert(rectangle.tam_width, rectangle.test_time, heuristic);
+    // test success or failure.
+    if (packedRect.height > 0) {
+      fitness = max(fitness, packedRect.y + packedRect.height);
+    }
+  }
+  return fitness;
+}
+
+long long next_ps(long long current_ps) {
+  // do some heuristic.
+}
+
+int main() {
+  extract_data();
+  sort_rectangles();
+  long long initial_ps = get_random(get_limit());
+  int fitness = get_fitness();
+}
+
+/**
 int main() {
   FILE *input_file = fopen("input.txt", "r");
   int argc, ans_width = 0, ans_height = 0;
@@ -111,3 +163,4 @@ int main() {
   }
   printf("%d X %d size of the rectangle required to pack all soc:\n", ans_width, ans_height);
 }
+*/
