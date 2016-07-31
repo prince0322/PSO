@@ -58,15 +58,30 @@ inline long long get_random(long long limit) {
 
 // Extracts data from the data table and store in the rectangles.
 inline void extract_data() {
-  FILE *input_file = fopen("input.txt", "r");
-  fscanf(input_file, "%d", &no_of_core);
-  fscanf(input_file, "%d", &input_tam_width);
-  for (int core = 0; core < no_of_core; core++) {
-    for (int w = 1; w <= input_tam_width; w++) {
-      int temp_test_time;
-      fscanf(input_file, "%d", &temp_test_time);
-      rectangles[core].push_back(make_pair(w, temp_test_time));
+  FILE *read_csv = fopen("d695.csv", "r");
+  fscanf(read_csv, "%d", &no_of_core);
+  fscanf(read_csv, "%d", &input_tam_width);
+  for (int w = 1; w <= input_tam_width; w++) {
+    int temp_tam_width = 0, temp_test_time = 0;
+    fscanf(read_csv, "%d", &temp_tam_width);
+    for (int core = 0; core < no_of_core; core++) {
+      fscanf(read_csv, "%d", &temp_test_time);
+      rectangles[core].push_back(make_pair(temp_tam_width, temp_test_time));
     }
+    // ignore total test_time of core.
+    fscanf(read_csv, "%d", &temp_test_time);
+  }
+}
+
+// helper function for debugging.
+inline void print_rectangles() {
+  for (int core = 0; core < no_of_core; core++) {
+    printf("Rectangle of core_no %d.\n", core + 1);
+    for (int i = 0; i < rectangles[core].size(); i++) {
+      pair <int, int> rectangle = rectangles[core][i];
+      printf("TAM width : %d Test Time : %d\n", rectangle.tam_width, rectangle.test_time);
+    }
+    putchar('\n');
   }
 }
 
@@ -94,6 +109,7 @@ inline int get_fitness(long long ps) {
   rbp :: MaxRectsBinPack::FreeRectChoiceHeuristic heuristic
       = rbp :: MaxRectsBinPack::RectBestShortSideFit;
   rbp :: MaxRectsBinPack bin;
+  bin.Init(input_tam_width, 659700);
   int fitness = 0;
   int required_bit = bit_required(input_tam_width);
   // packing is done individually
@@ -106,6 +122,8 @@ inline int get_fitness(long long ps) {
     // test success or failure.
     if (packedRect.height > 0) {
       fitness = max(fitness, packedRect.y + packedRect.height);
+    } else {
+      return -1;
     }
   }
   return fitness;
@@ -118,16 +136,18 @@ long long next_ps(long long current_ps) {
 int main() {
   extract_data();
   sort_rectangles();
+  //print_rectangles();
   long long initial_ps = get_random(get_limit());
-  int fitness = get_fitness();
+  int fitness = get_fitness(initial_ps);
+  printf("%d", fitness);
 }
 
 /**
 int main() {
-  FILE *input_file = fopen("input.txt", "r");
+  FILE *read_csv = fopen("input.txt", "r");
   int argc, ans_width = 0, ans_height = 0;
   printf("Enter the no. of variable:\n");
-  fscanf(input_file, "%d", &argc);
+  fscanf(read_csv, "%d", &argc);
   int arr[argc + 1];
   for(int i = 1; i <= argc; i++) {
     fscanf(fr, "%d", &arr[i]);
