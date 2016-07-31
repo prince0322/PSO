@@ -35,10 +35,34 @@ inline void sort_rectangles() {
   }
 }
 
+// it returns max bit required to store the given number of elements.
+inline int bit_required(int x) {
+  for (int i = 0; i < 30; i++) {
+    int mx = (1 << i) - 1;
+    if (mx >= x) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// it returns positive random number lesser than limit value.
+inline long long get_random(long long limit) {
+  long long x = (rand() << 15) + rand();
+  x %= limit;
+  if (x < 0) {
+    x += limit;
+  }
+  return x;
+}
+
+
+
 // Extracts data from the data table and store in the rectangles.
 void extract_data() {
   cout << "TODO: extract data quickly" << endl;
 }
+
 
 int main() {
   FILE *input_file = fopen("input.txt", "r");
