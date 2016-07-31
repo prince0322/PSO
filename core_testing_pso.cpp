@@ -1,5 +1,7 @@
 #include <bits/stdc++.h>
 
+#include "MaxRectsBinPack.cpp"
+
 using namespace std;
 
 #define tam_width first
