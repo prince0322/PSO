@@ -10,6 +10,12 @@ using namespace std;
 typedef bitset <60> Particle;
 typedef vector <Particle> Population;
 
+// changes in each and every iteration.
+Particle pBest;
+
+// best of all pBest particle.
+Particle gBest;
+
 // stores total number of core.
 int no_of_core;
 
@@ -66,7 +72,7 @@ inline Particle get_random_particles() {
   int sz = a.size();
   for (int i = 0; i < sz; i++) {
     if (get_random(2) == 1) {
-      a.set(i, 0);
+      a.set(i, 1);
     }
   }
   return a;
@@ -77,7 +83,8 @@ inline void extract_data() {
   FILE *read_csv = fopen("d695.csv", "r");
   fscanf(read_csv, "%d", &no_of_core);
   fscanf(read_csv, "%d", &input_tam_width);
-  for (int w = 1; w <= input_tam_width; w++) {
+  //input_tam_width = 16;
+  for (int w = 1; w <= 64; w++) {
     int temp_tam_width = 0, temp_test_time = 0;
     fscanf(read_csv, "%d", &temp_tam_width);
     for (int core = 0; core < no_of_core; core++) {
@@ -125,7 +132,7 @@ inline int get_fitness(Particle ps, bool print = false) {
   rbp :: MaxRectsBinPack::FreeRectChoiceHeuristic heuristic
       = rbp :: MaxRectsBinPack::RectBestShortSideFit;
   rbp :: MaxRectsBinPack bin;
-  bin.Init(input_tam_width, 36955);
+  bin.Init(input_tam_width, 500894);
   int fitness = 0;
   int required_bit = bit_required(input_tam_width);
   // packing is done individually
@@ -138,6 +145,9 @@ inline int get_fitness(Particle ps, bool print = false) {
     // test success or failure.
     if (packedRect.height > 0) {
       if (print) {
+        cout << "Core No : " << i + 1 << " ";
+        cout << "tam_width = " << rectangle.tam_width << " ";
+        cout << "test time = " << rectangle.test_time << " should put at" << endl;
         cout << "y = " << packedRect.x << " x = " << packedRect.y << endl;
       }
       fitness = max(fitness, packedRect.y + packedRect.height);
@@ -148,15 +158,42 @@ inline int get_fitness(Particle ps, bool print = false) {
   return fitness;
 }
 
+inline Particle better(const Particle &a, const Particle &b) {
+  int fitness_a = get_fitness(a);
+  int fitness_b = get_fitness(b);
+  if (fitness_a <= fitness_b) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
 // return new particle of cur induced by best particle.
-Particle get_induced_particle(Particle cur, Particle best) {
-  int sz = best.size();
+Particle get_induced_particle(Particle cur) {
+  int sz = cur.size();
   int l = get_random(sz);
   int r = get_random(sz);
   if (l > r) swap(l, r);
   for (int i = l; i <= r; i++) {
-    if (best.test(i)) {
-      cur.set(i, 1);
+    int z = get_random(2);
+    if (z == 1) {
+      cur.set(i, pBest.test(i));
+    } else {
+      cur.set(i, gBest.test(i));
+    }
+  }
+  return cur;
+}
+
+// return new particle of cur induced by best particle.
+Particle moov_just_opposite(Particle cur) {
+  int sz = cur.size();
+  int l = get_random(sz);
+  int r = get_random(sz);
+  if (l > r) swap(l, r);
+  for (int i = l; i <= r; i++) {
+    if (cur.test(i)) {
+      cur.set(i, 0);
     } else {
       cur.set(i, 1);
     }
@@ -164,23 +201,21 @@ Particle get_induced_particle(Particle cur, Particle best) {
   return cur;
 }
 
-// return next_population after mutation or recombination.
-Population next_population(Population cur, int & best_val, Particle &best_p) {
+
+Population next_population(Population cur) {
   Population nxt = cur;
-  int sz = cur.size();
-  int best_fitness = (int)2e9;
-  Particle best_particle;
-  for (int i = 0; i < sz; i++) {
-    int fitness = get_fitness(cur[i]);
-    if (fitness != -1 && fitness < best_fitness) {
-      best_fitness = fitness;
-      best_particle = cur[i];
+  for (int i = 0; i < cur.size(); i++) {
+    if (i == 0) {
+      pBest = cur[i];
+    } else {
+      pBest = better(pBest, cur[i]);
     }
   }
-  for (int i = 0; i < sz; i++) {
-    nxt[i] = get_induced_particle(nxt[i], best_particle);
+  gBest = better(gBest, pBest);
+  for (int i = 0; i < cur.size(); i++) {
+    nxt[i] = get_induced_particle(nxt[i]);
+    nxt[i] = moov_just_opposite(nxt[i]);
   }
-  best_p = best_particle;
   return nxt;
 }
 
@@ -189,67 +224,18 @@ int main() {
   extract_data();
   sort_rectangles();
   //print_rectangles();
-  int iteration = 1, population_size = 10;
-  Population previous;
+  Population cur;
+  int iteration = 1500, population_size = 150;
   for (int i = 0; i < population_size; i++) {
-    previous.push_back(get_random_particles());
+    cur.push_back(get_random_particles());
   }
-  int fitness = (int)2e9;
-  Particle best_ever;
-  while (iteration-- > 0) {
-    int temp_fitness = -1;
-    Particle temp_particle;
-    Population current = next_population(previous, temp_fitness, temp_particle);
-    previous = current;
-    if (temp_fitness < fitness) {
-      fitness = temp_fitness;
-      best_ever = temp_particle;
-    }
-    if (temp_fitness != -1) {
-      if (fitness )
-      fitness = min(fitness, temp_fitness);
-    }
+  for (int iter = 1; iter <= iteration; iter++) {
+    Population nxt = next_population(cur);
+    cout << "After Iteration " << iter << " : ";
+    cout << get_fitness(pBest) << " " << get_fitness(gBest) << endl;
+    cout << pBest << endl;
+    cout << gBest << endl;
+    cur = nxt;
   }
-  printf("%d\n", get_fitness(best_ever, true));
+  printf("%d\n", get_fitness(gBest, true));
 }
-
-// int main() {
-//   FILE *read_csv = fopen("input.txt", "r");
-//   int argc, ans_width = 0, ans_height = 0;
-//   printf("Enter the no. of variable:\n");
-//   fscanf(read_csv, "%d", &argc);
-//   int arr[argc + 1];
-//   for(int i = 1; i <= argc; i++) {
-//     fscanf(fr, "%d", &arr[i]);
-//   }
-//   using namespace rbp;
-//   MaxRectsBinPack bin;
-//   int binWidth = arr[1];
-//   int binHeight = arr[2];
-//   printf("Initializing Soc Core to size %dx%d.\n", binWidth, binHeight);
-//   bin.Init(binWidth, binHeight);
-
-//   // Pack each rectangle (w_i, h_i)
-//   int ctr = 0;
-//   for(int i = 3; i < argc; i += 2) {
-//     ctr++;
-//     // Read next rectangle to pack.
-//     int rectWidth = arr[i];
-//     int rectHeight = arr[i + 1];
-//     //printf("Packing rectangle of size %dx%d: ", rectWidth, rectHeight);
-
-//     // Perform the packing.
-//     MaxRectsBinPack::FreeRectChoiceHeuristic heuristic = MaxRectsBinPack::RectBestShortSideFit; // This can be changed individually even for each rectangle packed.
-//     Rect packedRect = bin.Insert(rectWidth, rectHeight, heuristic);
-
-//     // Test success or failure.
-//     if (packedRect.height > 0) {
-//       ans_width = max(ans_width, packedRect.x + packedRect.width);
-//       ans_height = max(ans_height, packedRect.y + packedRect.height);
-//       //printf("Packed to (x,y)=(%d,%d), (w,h)=(%d,%d). Free space left: %.2f%%\n", packedRect.x, packedRect.y, packedRect.width, packedRect.height, 100.f - bin.Occupancy()*100.f);
-//       printf(" %d. packed (x, y)=(%d, %d)\n", ctr,  packedRect.y, packedRect.x);
-//     } else
-//       printf("NOT packed all rectangle inside the given block:\n");
-//   }
-//   printf("%d X %d size of the rectangle required to pack all soc:\n", ans_width, ans_height);
-// }
